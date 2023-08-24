@@ -57,58 +57,69 @@ EmployeeListingCollectionFindSlot(
 	PEMPLOYEE_LISTING_COLLECTION pelListings,
 	SIZE_T cbRequiredSize)
 {
-	// sanity checks
-	if (NULL == pelListings->pelFirst)
-	{
-		// collection is empty
-		return pelListings->pbListings;
-	}
-
-	SIZE_T cbRemaining = EmployeeListingCollectionGetCapacity(pelListings);
-	if (cbRemaining < cbRequiredSize)
-	{
-		EmployeeListingCollectionIncreaseSize(pelListings);
-	}
-
-	// iterare over listings, looking for an opening or end of listing
-	// NOTE: cRemaining may be fragmented, so we might not have a slot big enough
-
+	PBYTE pCursor = pelListings->pbListings;
+	PBYTE pNext = (PBYTE)pelListings->pelFirst;
+	PBYTE pEnd = &pelListings->pbListings[pelListings->cbListingsSize - 1];
 	SIZE_T cbSlotSize = 0;
-	PEMPLOYEE_LISTING pCursor = pelListings->pelFirst;
-	while (pCursor && pCursor->pelNext)
+
+	while (NULL != pCursor &&
+		NULL != pNext &&
+		pEnd > pCursor)
 	{
-		// slot size is pelNext - current
-		cbSlotSize = ELC_CALC_SLOT_SIZE(pCursor, pCursor->pelNext);
+		cbSlotSize = pNext - pCursor;
 		if (cbSlotSize >= cbRequiredSize)
 		{
-			return (PBYTE)pCursor + pCursor->cbListingSize;
+			return pCursor;
 		}
 
-		pCursor = pCursor->pelNext;
+		pCursor = pNext + ((PEMPLOYEE_LISTING)pNext)->cbListingSize;
+		pNext = (PBYTE)((PEMPLOYEE_LISTING)pNext)->pelNext;
 	}
 
-	// if we're here, we're at the last listing
-	// the slot size is end of listing to the end of the memory area
-	if (pCursor)
+	// if we got here, pNext is NULL
+	// the slot is the block of memory following last listing
+	// i.e. the remaining memory in pbListings
+	if (NULL == pNext)
 	{
-		PBYTE pLastListing = (PBYTE)pCursor + pCursor->cbListingSize;
-		PBYTE pEnd = &pelListings->pbListings[pelListings->cbListingsSize - 1];
-		cbSlotSize = pEnd - pLastListing;
-
-		// see if remaining memory is sufficient
-		// could be insufficient due to fragmenting
+		pNext = pEnd;
+		cbSlotSize = pNext - pCursor;
 		if (cbSlotSize < cbRequiredSize)
 		{
 			EmployeeListingCollectionIncreaseSize(pelListings);
 		}
-
-		// either memory was too fragmented or the last slot was sufficient
-		// either way pLastListing is sufficient
-		return pLastListing;
 	}
 
-	// should not get here
-	__fastfail(244);
+	return pCursor;
+}
+
+PEMPLOYEE_LISTING
+EmployeeListingCollectionGetNeighbor(
+	PEMPLOYEE_LISTING_COLLECTION pelcListings,
+	PBYTE pListingSlot,
+	INT iNeighbor)
+{
+	PEMPLOYEE_LISTING pCursor = pelcListings->pelFirst;
+	PEMPLOYEE_LISTING pPrev = NULL;
+
+	while (NULL != pCursor &&
+		pListingSlot > (PBYTE)pCursor)
+	{
+		pPrev = pCursor;
+		pCursor = pCursor->pelNext;
+	}
+
+	if (ELC_NEIGHBOR_LEFT == iNeighbor)
+	{
+		return pPrev;
+	}
+	else if (ELC_NEIGHBOR_RIGHT == iNeighbor)
+	{
+		return pCursor;
+	}
+
+	// should never get here
+	__fastfail(ELC_NEIGHBOR_INVALID);
+	// return to satisfy warning
 	return NULL;
 }
 
@@ -117,22 +128,9 @@ EmployeeListingCollectionGetPredecessor(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings,
 	PBYTE pListingSlot)
 {
-	PEMPLOYEE_LISTING pCursor = pelcListings->pelFirst;
-	while (NULL != pCursor &&
-		NULL != pCursor->pelNext)
-	{
-		PBYTE stStart = (PBYTE)pCursor + pCursor->cbListingSize;
-		PBYTE stEnd = (PBYTE)pCursor->pelNext;
-		if (pListingSlot > stStart && 
-			(NULL == stEnd || pListingSlot < stEnd))
-		{
-			break;
-		}
-
-		pCursor = pCursor->pelNext;
-	}
-
-	return pCursor;
+	return EmployeeListingCollectionGetNeighbor(pelcListings,
+		pListingSlot,
+		ELC_NEIGHBOR_LEFT);
 }
 
 PEMPLOYEE_LISTING
@@ -140,27 +138,9 @@ EmployeeListingCollectionGetSuccessor(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings,
 	PBYTE pListingSlot)
 {
-	PEMPLOYEE_LISTING pCursor = pelcListings->pelFirst;
-	while (NULL != pCursor &&
-		NULL != pCursor->pelNext)
-	{
-		PBYTE stStart = (PBYTE)pCursor + pCursor->cbListingSize;
-		PBYTE stEnd = (PBYTE)pCursor->pelNext;
-		if (pListingSlot > stStart &&
-			(NULL == stEnd || pListingSlot < stEnd))
-		{
-			break;
-		}
-
-		pCursor = pCursor->pelNext;
-	}
-
-	if (NULL != pCursor)
-	{
-		return pCursor->pelNext;
-	}
-
-	return NULL;
+	return EmployeeListingCollectionGetNeighbor(pelcListings,
+		pListingSlot,
+		ELC_NEIGHBOR_RIGHT);
 }
 
 VOID

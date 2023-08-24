@@ -89,7 +89,7 @@ int main()
 	HeapFree(GetProcessHeap(), 0, pListing4);
 	pListing4 = EmployeeListingCollectionGetListingById(pelcListings, 0xFF);
 
-	printf("pListing4: %08x pListing4->plePrev: %08x pListing4->pleNext: %08x",
+	printf("pListing4: %p pListing4->plePrev: %p pListing4->pleNext: %p",
 		pListing4,
 		pListing4->pelPrev,
 		pListing4->pelNext);

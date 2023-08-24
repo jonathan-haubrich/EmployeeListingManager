@@ -7,6 +7,10 @@
 
 #define ELC_DEFAULT_SIZE	0x1000
 
+#define ELC_NEIGHBOR_LEFT		0x01
+#define ELC_NEIGHBOR_RIGHT		0x02
+#define ELC_NEIGHBOR_INVALID	0x03
+
 #define ELC_CALC_SLOT_SIZE(current, next)	((PBYTE)next - ((PBYTE)current + current->cbListingSize))
 
 typedef struct _EMPLOYEE_LISTING_COLLECTION
@@ -33,6 +37,12 @@ PBYTE
 EmployeeListingCollectionFindSlot(
 	PEMPLOYEE_LISTING_COLLECTION pelListings,
 	SIZE_T cbRequiredSize);
+
+PEMPLOYEE_LISTING
+EmployeeListingCollectionGetNeighbor(
+	PEMPLOYEE_LISTING_COLLECTION pelcListings,
+	PBYTE pListingSlot,
+	INT iNeighbor);
 
 PEMPLOYEE_LISTING
 EmployeeListingCollectionGetPredecessor(
