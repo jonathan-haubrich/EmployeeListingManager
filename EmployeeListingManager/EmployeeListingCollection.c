@@ -10,7 +10,6 @@ EmployeeListingCollectionNew(
 		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
 		sizeof(*pelcListings));
 
-	pelcListings->cEntries = 0;
 	pelcListings->cbListingsSize = ELC_DEFAULT_SIZE;
 	pelcListings->pbListings = (PBYTE)HeapAlloc(GetProcessHeap(),
 		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
@@ -21,12 +20,28 @@ EmployeeListingCollectionNew(
 	return pelcListings;
 }
 
+VOID
+EmployeeListingCollectionDestroy(
+	PEMPLOYEE_LISTING_COLLECTION pelcListings)
+{
+	if (NULL == pelcListings)
+	{
+		return;
+	}
+
+	if (NULL != pelcListings->pbListings)
+	{
+		HeapFree(GetProcessHeap(), 0, pelcListings->pbListings);
+	}
+	HeapFree(GetProcessHeap(), 0, pelcListings);
+}
+
 SIZE_T
 EmployeeListingCollectionGetCapacity(
-	PEMPLOYEE_LISTING_COLLECTION pelListings)
+	PEMPLOYEE_LISTING_COLLECTION pelcListings)
 {
-	SIZE_T cRemaining = pelListings->cbListingsSize;
-	PEMPLOYEE_LISTING pCursor = pelListings->pelFirst;
+	SIZE_T cRemaining = pelcListings->cbListingsSize;
+	PEMPLOYEE_LISTING pCursor = pelcListings->pelFirst;
 
 	while (NULL != pCursor)
 	{
@@ -35,6 +50,22 @@ EmployeeListingCollectionGetCapacity(
 	}
 
 	return cRemaining;
+}
+
+BYTE
+EmployeeListingCollectionGetEntries(
+	PEMPLOYEE_LISTING_COLLECTION pelcListings)
+{
+	BYTE cEntries = 0;
+	PEMPLOYEE_LISTING pCursor = pelcListings->pelFirst;
+
+	while (NULL != pCursor)
+	{
+		++cEntries;
+		pCursor = pCursor->pelNext;
+	}
+
+	return cEntries;
 }
 
 VOID
@@ -54,12 +85,12 @@ EmployeeListingCollectionIncreaseSize(
 
 PBYTE
 EmployeeListingCollectionFindSlot(
-	PEMPLOYEE_LISTING_COLLECTION pelListings,
+	PEMPLOYEE_LISTING_COLLECTION pelcListings,
 	SIZE_T cbRequiredSize)
 {
-	PBYTE pCursor = pelListings->pbListings;
-	PBYTE pNext = (PBYTE)pelListings->pelFirst;
-	PBYTE pEnd = &pelListings->pbListings[pelListings->cbListingsSize - 1];
+	PBYTE pCursor = pelcListings->pbListings;
+	PBYTE pNext = (PBYTE)pelcListings->pelFirst;
+	PBYTE pEnd = &pelcListings->pbListings[pelcListings->cbListingsSize - 1];
 	SIZE_T cbSlotSize = 0;
 
 	while (NULL != pCursor &&
@@ -85,7 +116,7 @@ EmployeeListingCollectionFindSlot(
 		cbSlotSize = pNext - pCursor;
 		if (cbSlotSize < cbRequiredSize)
 		{
-			EmployeeListingCollectionIncreaseSize(pelListings);
+			EmployeeListingCollectionIncreaseSize(pelcListings);
 		}
 	}
 

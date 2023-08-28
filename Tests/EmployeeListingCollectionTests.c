@@ -29,9 +29,9 @@ int main()
 		acDescription3,
 		HexFormatter);
 
-	BasicFormatter(pListing1);
-	FancyFormatter(pListing2);
-	HexFormatter(pListing3);
+	BasicFormatter(GetStdHandle(STD_OUTPUT_HANDLE), pListing1);
+	FancyFormatter(GetStdHandle(STD_OUTPUT_HANDLE), pListing2);
+	HexFormatter(GetStdHandle(STD_OUTPUT_HANDLE), pListing3);
 
 	PEMPLOYEE_LISTING_COLLECTION pelcListings = EmployeeListingCollectionNew();
 
@@ -60,7 +60,7 @@ int main()
 	HeapFree(GetProcessHeap(), 0, pListing3);
 
 	pListing1 = EmployeeListingCollectionGetListingById(pelcListings, 0x01);
-	HexFormatter(pListing1);
+	HexFormatter(GetStdHandle(STD_OUTPUT_HANDLE), pListing1);
 
 	EmployeeListingCollectionRemoveListing(pelcListings, pListing1);
 	if (pelcListings->pelFirst->bId != 0x00 ||

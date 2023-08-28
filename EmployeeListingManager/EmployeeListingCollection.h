@@ -1,7 +1,7 @@
 #ifndef _EMPLOYEELISTINGCOLLECTION_H
 #define _EMPLOYEELISTINGCOLLECTION_H
 
-#include <Windows.h>
+#include <WinSock2.h>
 
 #include "EmployeeListing.h"
 
@@ -15,7 +15,6 @@
 
 typedef struct _EMPLOYEE_LISTING_COLLECTION
 {
-	DWORD cEntries;
 	SIZE_T cbListingsSize;
 	PBYTE pbListings;
 	PEMPLOYEE_LISTING pelFirst;
@@ -25,9 +24,17 @@ PEMPLOYEE_LISTING_COLLECTION
 EmployeeListingCollectionNew(
 	VOID);
 
+VOID
+EmployeeListingCollectionDestroy(
+	PEMPLOYEE_LISTING_COLLECTION pelcListings);
+
 SIZE_T
 EmployeeListingCollectionGetCapacity(
-	PEMPLOYEE_LISTING_COLLECTION pelListings);
+	PEMPLOYEE_LISTING_COLLECTION pelcListings);
+
+BYTE
+EmployeeListingCollectionGetEntries(
+	PEMPLOYEE_LISTING_COLLECTION pelcListings);
 
 VOID
 EmployeeListingCollectionIncreaseSize(
@@ -35,7 +42,7 @@ EmployeeListingCollectionIncreaseSize(
 
 PBYTE
 EmployeeListingCollectionFindSlot(
-	PEMPLOYEE_LISTING_COLLECTION pelListings,
+	PEMPLOYEE_LISTING_COLLECTION pelcListings,
 	SIZE_T cbRequiredSize);
 
 PEMPLOYEE_LISTING

@@ -1,40 +1,40 @@
 #include "EmployeeListingFormatters.h"
 
-VOID OutputStrWithNewline(PSTR pStr, DWORD cbStrLen)
+VOID OutputStrWithNewline(HANDLE hFile, PSTR pStr, DWORD cbStrLen)
 {
 	DWORD dwBytesWritten = 0;
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),
+	WriteFile(hFile,
 		pStr,
 		cbStrLen,
 		&dwBytesWritten,
 		NULL);
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),
+	WriteFile(hFile,
 		"\n",
 		1,
 		&dwBytesWritten,
 		NULL);
 }
 
-VOID BasicFormatter(PEMPLOYEE_LISTING pEmployeeListing)
+VOID BasicFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
 {
-	OutputStrWithNewline(pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
-	OutputStrWithNewline(pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
-	OutputStrWithNewline(pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
+	OutputStrWithNewline(hFile, pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
+	OutputStrWithNewline(hFile, pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
+	OutputStrWithNewline(hFile, pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
 }
 
-VOID FancyFormatter(PEMPLOYEE_LISTING pEmployeeListing)
+VOID FancyFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
 {
 	DWORD dwBytesWritten = 0;
 	CHAR acszHeaderFooter[] = "=========================";
 
-	OutputStrWithNewline(acszHeaderFooter, _countof(acszHeaderFooter));
-	OutputStrWithNewline(pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
-	OutputStrWithNewline(pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
-	OutputStrWithNewline(pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
-	OutputStrWithNewline(acszHeaderFooter, _countof(acszHeaderFooter));
+	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter));
+	OutputStrWithNewline(hFile, pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
+	OutputStrWithNewline(hFile, pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
+	OutputStrWithNewline(hFile, pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
+	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter));
 }
 
-VOID OutputHexByte(BYTE b)
+VOID OutputHexByte(HANDLE hFile, BYTE b)
 {
 	PSTR pOutput = NULL;
 	DWORD dwAllocated = 0;
@@ -60,7 +60,7 @@ VOID OutputHexByte(BYTE b)
 		return;
 	}
 
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),
+	WriteFile(hFile,
 		pOutput,
 		dwAllocated,
 		&dwBytesWritten,
@@ -69,36 +69,75 @@ VOID OutputHexByte(BYTE b)
 	LocalFree(pOutput);
 }
 
-OutputStrAsHex(PSTR pStr, DWORD cbStrLen)
+OutputStrAsHex(HANDLE hFile, PSTR pStr, DWORD cbStrLen)
 {
 	for (DWORD i = 0; i < cbStrLen; ++i)
 	{
-		OutputHexByte(pStr[i]);
+		OutputHexByte(hFile, pStr[i]);
 	}
 }
 
-OutputStrAsHexWithNewline(PSTR pStr, DWORD cbStrLen)
+OutputStrAsHexWithNewline(HANDLE hFile, PSTR pStr, DWORD cbStrLen)
 {
 	DWORD dwBytesWritten = 0;
 
-	OutputStrAsHex(pStr, cbStrLen);
+	OutputStrAsHex(hFile, pStr, cbStrLen);
 
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),
+	WriteFile(hFile,
 		"\n",
 		1,
 		&dwBytesWritten,
 		NULL);
 }
 
-VOID HexFormatter(PEMPLOYEE_LISTING pEmployeeListing)
+VOID HexFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
 {
-	OutputStrAsHexWithNewline(pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
-	OutputStrAsHexWithNewline(pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
-	OutputStrAsHexWithNewline(pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
+	OutputStrAsHexWithNewline(hFile, pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
+	OutputStrAsHexWithNewline(hFile, pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
+	OutputStrAsHexWithNewline(hFile, pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
 }
 
 extern FORMATTER_ENTRY g_afeFormattersMap[ELF_NUM_FORMATTERS] = {
 	{ "basic", BasicFormatter },
 	{ "fancy", FancyFormatter },
-	{ "hex", HexFormatter}
+	{ "hex", HexFormatter }
 };
+
+FN_EMPLOYEEFORMATTER
+GetFormatterByName(
+	PSTR pszName)
+{
+	SIZE_T cchNameLen = 0;
+	SIZE_T cchEntryLen = 0;
+	if (S_OK != StringCchLengthA(pszName, STRSAFE_MAX_LENGTH, &cchNameLen))
+	{
+		return NULL;
+	}
+
+	for (DWORD dwFormatter = 0;
+		dwFormatter < _countof(g_afeFormattersMap);
+		++dwFormatter)
+	{
+		if (S_OK != StringCchLengthA(g_afeFormattersMap[dwFormatter].acszName,
+			STRSAFE_MAX_LENGTH,
+			&cchEntryLen))
+		{
+			return NULL;
+		}
+
+		if (CSTR_EQUAL == CompareStringEx(LOCALE_NAME_SYSTEM_DEFAULT,
+			NORM_IGNORECASE,
+			pszName,
+			cchNameLen,
+			g_afeFormattersMap[dwFormatter].acszName,
+			cchEntryLen,
+			NULL,
+			NULL,
+			0))
+		{
+			return g_afeFormattersMap[dwFormatter].fnFormatter;
+		}
+	}
+
+	return NULL;
+}

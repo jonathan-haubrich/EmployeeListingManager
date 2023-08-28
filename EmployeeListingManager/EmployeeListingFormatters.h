@@ -1,7 +1,8 @@
 #ifndef _EMPLOYEELISTINGFORMATTERS_H
 #define _EMPLOYEELISTINGFORMATTERS_H
 
-#include <Windows.h>
+#include <WinSock2.h>
+#include <strsafe.h>
 
 #include "EmployeeListing.h"
 
@@ -17,8 +18,12 @@ typedef struct _FORMATTER_ENTRY
 
 extern FORMATTER_ENTRY g_afeFormattersMap[ELF_NUM_FORMATTERS];
 
-VOID BasicFormatter(PEMPLOYEE_LISTING pEmployeeListing);
-VOID FancyFormatter(PEMPLOYEE_LISTING pEmployeeListing);
-VOID HexFormatter(PEMPLOYEE_LISTING pEmployeeListing);
+VOID BasicFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing);
+VOID FancyFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing);
+VOID HexFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing);
+
+FN_EMPLOYEEFORMATTER
+GetFormatterByName(
+	PSTR pszName);
 
 #endif // _EMPLOYEELISTINGFORMATTERS_H

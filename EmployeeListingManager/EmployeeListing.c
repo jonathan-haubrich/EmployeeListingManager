@@ -12,10 +12,11 @@ EmployeeListingNew(
 	BYTE cbFirstName = (BYTE)min(strlen(pszFirstName), EL_FIRSTNAME_MAX_LEN);
 	BYTE cbLastName = (BYTE)min(strlen(pszFirstName), EL_LASTNAME_MAX_LEN);
 
-
 	PEMPLOYEE_LISTING pEmployeeListing = NULL;
+
+	// Size of struct is dynamic
+	// calculate required size based on length of strings
 	SIZE_T cbListingSize = (sizeof(*pEmployeeListing) - 1) + cbFirstName + cbLastName + cbDescription;
-	
 	pEmployeeListing = (PEMPLOYEE_LISTING)HeapAlloc(GetProcessHeap(),
 		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
 		cbListingSize);

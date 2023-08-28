@@ -2,6 +2,8 @@
 file(GLOB
 	EmployeeListingSources
 	"../EmployeeListingManager/Employee*.c"
+	"../EmployeeListingManager/Network/*.c"
+	"../EmployeeListingManager/Protocol/*.c"
 )
 
 add_executable(EmployeeListingTests
