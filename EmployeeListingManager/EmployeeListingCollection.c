@@ -214,7 +214,10 @@ EmployeeListingCollectionRemoveListing(
 	{
 		// listing is the first
 		pelcListings->pelFirst = pelListing->pelNext;
-		if (NULL != pelcListings->pelFirst->pelNext)
+
+		// pelFirst might be NULL here if listing was only one in collection
+		if (NULL != pelcListings->pelFirst &&
+			NULL != pelcListings->pelFirst->pelNext)
 		{
 			pelcListings->pelFirst->pelPrev = pelcListings->pelFirst;
 		}

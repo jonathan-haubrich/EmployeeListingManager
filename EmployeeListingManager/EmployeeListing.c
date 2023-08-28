@@ -10,7 +10,7 @@ EmployeeListingNew(
 	FN_EMPLOYEEFORMATTER fnFormatter)
 {
 	BYTE cbFirstName = (BYTE)min(strlen(pszFirstName), EL_FIRSTNAME_MAX_LEN);
-	BYTE cbLastName = (BYTE)min(strlen(pszFirstName), EL_LASTNAME_MAX_LEN);
+	BYTE cbLastName = (BYTE)min(strlen(pszLastName), EL_LASTNAME_MAX_LEN);
 
 	PEMPLOYEE_LISTING pEmployeeListing = NULL;
 

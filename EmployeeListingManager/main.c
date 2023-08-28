@@ -12,7 +12,7 @@
 
 VOID
 StartCommandListener(
-	PBOOL pfStop);
+	WSAEVENT wsaeStop);
 
 INT wmain(INT argc, PWSTR argv[])
 {
@@ -29,7 +29,8 @@ INT wmain(INT argc, PWSTR argv[])
 			0 == StrCmpIW(argv[1], L"-help") ||
 			0 == StrCmpIW(argv[1], L"--help"))
 		{
-			fwprintf(stderr, L"Usage: %0 <listen port (default: %s)> <listen addr (default: %s)>\r\n",
+			fwprintf(stderr, L"Usage: %s <listen port (default: %s)> <listen addr (default: %s)>\r\n",
+				argv[0],
 				DEFAULT_LISTEN_PORT,
 				DEFAULT_LISTEN_ADDR);
 			return EXIT_FAILURE;
@@ -49,9 +50,9 @@ INT wmain(INT argc, PWSTR argv[])
 		{
 			pelcListings = EmployeeListingCollectionNew();
 			DWORD_PTR adwpServerLoopArguments[] = {
-				sServer,
-				wsaeStop,
-				pelcListings
+				(DWORD_PTR)sServer,
+				(DWORD_PTR)wsaeStop,
+				(DWORD_PTR)pelcListings
 			};
 			hServerLoopThread = CreateThread(NULL, 0, ServerLoopThreadProc, adwpServerLoopArguments, 0, NULL);
 			StartCommandListener(wsaeStop);

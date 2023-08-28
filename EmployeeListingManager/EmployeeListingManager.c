@@ -39,7 +39,7 @@ StartServer(
 		return FALSE;
 	}
 
-	if (0 != bind(sServer, (const struct sockaddr*)(pResults->ai_addr), pResults->ai_addrlen))
+	if (0 != bind(sServer, (const struct sockaddr*)(pResults->ai_addr), (INT)pResults->ai_addrlen))
 	{
 		fwprintf(stderr, L"bind failed: %d", WSAGetLastError());
 		return FALSE;
@@ -85,7 +85,7 @@ HandleRequestAddUser(
 		goto end;
 	}
 
-	fnFormatter = GetFormatterByName(pRequestAddUser->cbFirstName);
+	fnFormatter = GetFormatterByName(pRequestAddUser->sFormatter);
 	if (NULL == fnFormatter)
 	{
 		ResponseHeader.bResponseCode = ELM_RESPONSE_INVALID_FORMATTER;
@@ -131,7 +131,8 @@ HandleRequestRemoveUser(
 		return FALSE;
 	}
 
-	if (pEmployeeListing == EmployeeListingCollectionGetListingById(pelcListings, RequestRemoveUser.bId))
+	pEmployeeListing = EmployeeListingCollectionGetListingById(pelcListings, RequestRemoveUser.bId);
+	if (NULL == pEmployeeListing)
 	{
 		ResponseHeader.bResponseCode = ELM_RESPONSE_UNKNOWN_USER;
 		goto end;
@@ -161,8 +162,8 @@ HandleRequestListUsers(
 		cbTotalSize);
 
 	pResponseHeaderPayload->rhHeader.bResponseCode = ELM_RESPONSE_SUCCESS;
+	pResponseHeaderPayload->rdPayload.cPayloadSize = (BYTE)cbEntriesSize;
 	pResponseHeaderPayload->rdPayload.dwNumItems = cEntries;
-	pResponseHeaderPayload->rdPayload.dwNumItems = cbEntriesSize;
 
 	pEmployeeListing = pelcListings->pelFirst;
 	BYTE cEntry = 0;
@@ -175,7 +176,7 @@ HandleRequestListUsers(
 		pEmployeeListing = pEmployeeListing->pelNext;
 	}
 
-	fSuccess = SendAll(sRemote, (PBYTE)&pResponseHeaderPayload, cbTotalSize);
+	fSuccess = SendAll(sRemote, (PBYTE)pResponseHeaderPayload, cbTotalSize);
 	HeapFree(GetProcessHeap(), 0, pResponseHeaderPayload);
 	return fSuccess;
 }
@@ -194,17 +195,27 @@ HandleRequestDisplayUser(
 		return FALSE;
 	}
 
-	if (pEmployeeListing == EmployeeListingCollectionGetListingById(pelcListings, RequestDisplayUser.bId))
+	pEmployeeListing = EmployeeListingCollectionGetListingById(pelcListings, RequestDisplayUser.bId);
+	if (NULL == pEmployeeListing)
 	{
 		ResponseHeader.bResponseCode = ELM_RESPONSE_UNKNOWN_USER;
 		goto end;
 	}
 
 	SendAll(sRemote, (PBYTE)&ResponseHeader, sizeof(ResponseHeader));
-	pEmployeeListing->fnFormatter(sRemote, pEmployeeListing);
+	pEmployeeListing->fnFormatter((HANDLE)sRemote, pEmployeeListing);
 	return TRUE;
 
 end:
+	return SendAll(sRemote, (PBYTE)&ResponseHeader, sizeof(ResponseHeader));
+}
+
+BOOL
+HandleRequestInvalidCommand(
+	SOCKET sRemote,
+	PEMPLOYEE_LISTING_COLLECTION pelcListings)
+{
+	RESPONSE_HEADER ResponseHeader = { ELM_RESPONSE_INVALID_COMMAND };
 	return SendAll(sRemote, (PBYTE)&ResponseHeader, sizeof(ResponseHeader));
 }
 
@@ -214,6 +225,7 @@ HandleConnection(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings)
 {
 	REQUEST_HEADER RequestHeader = { 0 };
+	BOOL fSuccess = TRUE;
 
 	if (FALSE == ReceiveAll(sRemote, (PBYTE)&RequestHeader, sizeof(RequestHeader)))
 	{
@@ -223,16 +235,25 @@ HandleConnection(
 	switch (RequestHeader.bCommandType)
 	{
 	case ELM_REQUEST_ADD_USER:
-		return HandleRequestAddUser(sRemote, pelcListings);
+		fSuccess = HandleRequestAddUser(sRemote, pelcListings);
+		break;
 	case ELM_REQUEST_REMOVE_USER:
-		return HandleRequestRemoveUser(sRemote, pelcListings);
+		fSuccess = HandleRequestRemoveUser(sRemote, pelcListings);
+		break;
 	case ELM_REQUEST_LIST_USERS:
-		return HandleRequestListUsers(sRemote, pelcListings);
+		fSuccess = HandleRequestListUsers(sRemote, pelcListings);
+		break;
 	case ELM_REQUEST_DISPLAY_USER:
-		return HandleRequestDisplayUser(sRemote, pelcListings);
+		fSuccess = HandleRequestDisplayUser(sRemote, pelcListings);
+		break;
+	default:
+		fSuccess = HandleRequestInvalidCommand(sRemote, pelcListings);
+		break;
 	}
 
-	return TRUE;
+	closesocket(sRemote);
+
+	return fSuccess;
 }
 
 BOOL
@@ -259,24 +280,24 @@ HandleNetworkEvent(
 	{
 		if (wsaNetworkEvents.iErrorCode[FD_ACCEPT_BIT] == 1)
 		{
-			fwprintf("FD_ACCEPT encountered error: %d\r\n", WSAGetLastError());
+			fwprintf(stderr, L"FD_ACCEPT encountered error: %d\r\n", WSAGetLastError());
 			return FALSE;
 		}
 
 		iAddrLen = sizeof(sasRemote);
 		SecureZeroMemory(&sasRemote, iAddrLen);
 
-		printf("Entering WSAAccept\r\n");
 		sRemote = WSAAccept(sServer, (struct sockaddr*)&sasRemote, &iAddrLen, NULL, 0);
 		if (INVALID_SOCKET == sRemote)
 		{
 			fwprintf(stderr, L"WSAAccept failed: %d", WSAGetLastError());
 			return FALSE;
 		}
-		printf("WSAAccept returned\r\n");
 
 		return HandleConnection(sRemote, pelcListings);
 	}
+
+	return TRUE;
 }
 
 BOOL
@@ -296,9 +317,9 @@ ServerLoop(
 	
 	wsaeServer = WSACreateEvent();
 	if (NULL == wsaeServer ||
-		0 != WSAEventSelect(sServer, wsaeServer, FD_ACCEPT | FD_CLOSE))
+		0 != WSAEventSelect(sServer, wsaeServer, FD_ACCEPT))
 	{
-		fwprintf(L"WSAEventSelect failed: %d\r\n", WSAGetLastError());
+		fwprintf(stderr, L"WSAEventSelect failed: %d\r\n", WSAGetLastError());
 		return FALSE;
 	}
 	wsaEvents[0] = wsaeServer;
@@ -317,8 +338,9 @@ ServerLoop(
 		case 0:
 			if (FALSE == HandleNetworkEvent(sServer, wsaeServer, pelcListings))
 			{
-				break;
+				fStop = TRUE;
 			}
+			break;
 		case 1:
 			fStop = TRUE;
 			break;

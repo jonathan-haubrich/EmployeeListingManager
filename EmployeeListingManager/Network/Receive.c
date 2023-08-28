@@ -15,9 +15,9 @@ ReceiveAll(
 	while (dwTotalBytes < cbRecvLen)
 	{
 		wsaBuf.buf = &pBuffer[dwTotalBytes];
-		wsaBuf.len = cbRecvLen - dwTotalBytes;
+		wsaBuf.len = (ULONG)(cbRecvLen - dwTotalBytes);
 
-		if (0 != WSARecv(sRemote,
+		if (SOCKET_ERROR == WSARecv(sRemote,
 			&wsaBuf,
 			1,
 			&dwBytesReceived,
@@ -55,10 +55,11 @@ ReceiveRequestAddUser(
 		goto fail;
 	}
 
-	if (FALSE == ReceiveAll(sRemote, &cbListingSize, sizeof(cbListingSize)))
+	if (FALSE == ReceiveAll(sRemote, (PBYTE)&cbListingSize, sizeof(cbListingSize)))
 	{
 		goto fail;
 	}
+	cbListingSize = htonll(cbListingSize);
 
 	pRequestAddUser = (PREQUEST_ADD_USER)HeapAlloc(GetProcessHeap(),
 		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
@@ -92,7 +93,7 @@ ReceiveRequestRemoveUser(
 	SOCKET sRemote,
 	PREQUEST_REMOVE_USER pRequestRemoveUser)
 {
-	return ReceiveAll(sRemote, pRequestRemoveUser, sizeof(*pRequestRemoveUser));
+	return ReceiveAll(sRemote, (PBYTE)pRequestRemoveUser, sizeof(*pRequestRemoveUser));
 }
 
 BOOL
@@ -100,7 +101,7 @@ ReceiveRequestGetUser(
 	SOCKET sRemote,
 	PREQUEST_GET_USER pRequestGetUser)
 {
-	return ReceiveAll(sRemote, pRequestGetUser, sizeof(*pRequestGetUser));
+	return ReceiveAll(sRemote, (PBYTE)pRequestGetUser, sizeof(*pRequestGetUser));
 }
 
 BOOL
@@ -108,5 +109,5 @@ ReceiveRequestDisplayUser(
 	SOCKET sRemote,
 	PREQUEST_DISPLAY_USER pRequestDisplayUser)
 {
-	return ReceiveAll(sRemote, pRequestDisplayUser, sizeof(*pRequestDisplayUser));
+	return ReceiveAll(sRemote, (PBYTE)pRequestDisplayUser, sizeof(*pRequestDisplayUser));
 }

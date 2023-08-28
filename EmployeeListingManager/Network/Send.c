@@ -13,7 +13,7 @@ SendAll(
 	while (dwTotalBytes < cbSendLen)
 	{
 		wsaBuf.buf = (CHAR*)&pBuffer[dwTotalBytes];
-		wsaBuf.len = cbSendLen - dwTotalBytes;
+		wsaBuf.len = (ULONG)(cbSendLen - dwTotalBytes);
 
 		if (0 != WSASend(sRemote,
 			&wsaBuf,

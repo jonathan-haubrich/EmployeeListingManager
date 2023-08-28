@@ -46,6 +46,11 @@ HandleRequestDisplayUser(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings);
 
 BOOL
+HandleRequestInvalidCommand(
+	SOCKET sRemote,
+	PEMPLOYEE_LISTING_COLLECTION pelcListings);
+
+BOOL
 HandleConnection(
 	SOCKET sRemote,
 	PEMPLOYEE_LISTING_COLLECTION pelcListings);
@@ -53,7 +58,7 @@ HandleConnection(
 BOOL
 ServerLoop(
 	SOCKET sServer,
-	PBOOL pfStop,
+	WSAEVENT wsaeStop,
 	PEMPLOYEE_LISTING_COLLECTION pelcListings);
 
 BOOL

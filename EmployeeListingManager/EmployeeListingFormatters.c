@@ -27,11 +27,11 @@ VOID FancyFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
 	DWORD dwBytesWritten = 0;
 	CHAR acszHeaderFooter[] = "=========================";
 
-	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter));
+	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter)-1);
 	OutputStrWithNewline(hFile, pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
 	OutputStrWithNewline(hFile, pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
 	OutputStrWithNewline(hFile, pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
-	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter));
+	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter)-1);
 }
 
 VOID OutputHexByte(HANDLE hFile, BYTE b)
@@ -127,10 +127,10 @@ GetFormatterByName(
 
 		if (CSTR_EQUAL == CompareStringEx(LOCALE_NAME_SYSTEM_DEFAULT,
 			NORM_IGNORECASE,
-			pszName,
-			cchNameLen,
-			g_afeFormattersMap[dwFormatter].acszName,
-			cchEntryLen,
+			(LPCWCH)pszName,
+			(INT)cchNameLen,
+			(LPCWCH)g_afeFormattersMap[dwFormatter].acszName,
+			(INT)cchEntryLen,
 			NULL,
 			NULL,
 			0))
