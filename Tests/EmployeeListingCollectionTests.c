@@ -35,9 +35,9 @@ int main()
 
 	PEMPLOYEE_LISTING_COLLECTION pelcListings = EmployeeListingCollectionNew();
 
-	EmployeeListingCollectionAddListing(pelcListings, pListing1);
-	EmployeeListingCollectionAddListing(pelcListings, pListing2);
-	EmployeeListingCollectionAddListing(pelcListings, pListing3);
+	EmployeeListingCollectionAddListing(pelcListings, pListing1, pListing1->cbListingSize);
+	EmployeeListingCollectionAddListing(pelcListings, pListing2, pListing2->cbListingSize);
+	EmployeeListingCollectionAddListing(pelcListings, pListing3, pListing3->cbListingSize);
 
 	if (pelcListings->pelFirst->bId != 0x00)
 	{
@@ -62,7 +62,7 @@ int main()
 	pListing1 = EmployeeListingCollectionGetListingById(pelcListings, 0x01);
 	HexFormatter(GetStdHandle(STD_OUTPUT_HANDLE), pListing1);
 
-	EmployeeListingCollectionRemoveListing(pelcListings, pListing1);
+	EmployeeListingCollectionRemoveListing(pelcListings, pListing1, pListing1->cbListingSize);
 	if (pelcListings->pelFirst->bId != 0x00 ||
 		pelcListings->pelFirst->pelNext->bId != 0x02)
 	{
@@ -77,7 +77,7 @@ int main()
 		_countof(acDescription4),
 		acDescription4,
 		HexFormatter);
-	EmployeeListingCollectionAddListing(pelcListings, pListing4);
+	EmployeeListingCollectionAddListing(pelcListings, pListing4, pListing4->cbListingSize);
 	if (pelcListings->pelFirst->bId != 0x00 ||
 		pelcListings->pelFirst->pelNext->bId != 0xFF ||
 		pelcListings->pelFirst->pelNext->pelNext->bId != 0x02)

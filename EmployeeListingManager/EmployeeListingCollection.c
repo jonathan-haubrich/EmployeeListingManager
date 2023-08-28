@@ -177,10 +177,11 @@ EmployeeListingCollectionGetSuccessor(
 VOID
 EmployeeListingCollectionAddListing(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings,
-	PEMPLOYEE_LISTING pelListing)
+	PEMPLOYEE_LISTING pelListing,
+	SIZE_T cbListing)
 {
 	PBYTE pListingSlot = EmployeeListingCollectionFindSlot(pelcListings,
-		pelListing->cbListingSize);
+		cbListing);
 
 	if (NULL == pelcListings->pelFirst)
 	{

@@ -16,7 +16,7 @@ EmployeeListingNew(
 
 	// Size of struct is dynamic
 	// calculate required size based on length of strings
-	SIZE_T cbListingSize = (sizeof(*pEmployeeListing) - 1) + cbFirstName + cbLastName + cbDescription;
+	SIZE_T cbListingSize = (sizeof(*pEmployeeListing) - 1) + cbDescription;
 	pEmployeeListing = (PEMPLOYEE_LISTING)HeapAlloc(GetProcessHeap(),
 		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
 		cbListingSize);
@@ -33,6 +33,7 @@ EmployeeListingNew(
 	RtlCopyMemory(pEmployeeListing->sLastName, pszLastName, cbLastName);
 	pEmployeeListing->cbDescription = cbDescription;
 	RtlCopyMemory(pEmployeeListing->sDescription, pszDescription, cbDescription);
+
 	pEmployeeListing->fnFormatter = fnFormatter;
 
 	return pEmployeeListing;

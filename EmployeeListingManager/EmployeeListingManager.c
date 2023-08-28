@@ -103,7 +103,7 @@ HandleRequestAddUser(
 		ResponseHeader.bResponseCode = ELM_RESPONSE_FAILURE;
 	}
 
-	EmployeeListingCollectionAddListing(pelcListings, pEmployeeListing);
+	EmployeeListingCollectionAddListing(pelcListings, pEmployeeListing, pRequestAddUser->cbListingSize);
 
 end:
 	if (NULL != pEmployeeListing)
