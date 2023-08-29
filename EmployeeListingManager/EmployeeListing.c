@@ -16,25 +16,28 @@ EmployeeListingNew(
 
 	// Size of struct is dynamic
 	// calculate required size based on length of strings
-	SIZE_T cbListingSize = (sizeof(*pEmployeeListing) - 1) + cbDescription;
+	DWORD cbListingSize = sizeof(EMPLOYEE_LISTING_METADATA) + 
+		cbFirstName +
+		cbLastName +
+		cbDescription;
+
 	pEmployeeListing = (PEMPLOYEE_LISTING)HeapAlloc(GetProcessHeap(),
 		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
-		cbListingSize);
+		cbListingSize * 2); // allocate twice as much, just to be safe...
 
-	pEmployeeListing->bId = bId;
-	pEmployeeListing->pelPrev = NULL;
-	pEmployeeListing->pelNext = NULL;
+	pEmployeeListing->MetaData.bId = bId;
+	pEmployeeListing->MetaData.pelPrev = NULL;
+	pEmployeeListing->MetaData.pelNext = NULL;
 
-	pEmployeeListing->cbListingSize = cbListingSize;
+	pEmployeeListing->MetaData.cbListingSize = cbListingSize;
+	pEmployeeListing->MetaData.fnFormatter = fnFormatter;
+	pEmployeeListing->MetaData.cbFirstName = cbFirstName;
+	pEmployeeListing->MetaData.cbLastName = cbLastName;
+	pEmployeeListing->MetaData.cbDescription = cbDescription;
 
-	pEmployeeListing->cbFirstName = cbFirstName;
-	RtlCopyMemory(pEmployeeListing->sFirstName, pszFirstName, cbFirstName);
-	pEmployeeListing->cbLastName = cbLastName;
-	RtlCopyMemory(pEmployeeListing->sLastName, pszLastName, cbLastName);
-	pEmployeeListing->cbDescription = cbDescription;
-	RtlCopyMemory(pEmployeeListing->sDescription, pszDescription, cbDescription);
-
-	pEmployeeListing->fnFormatter = fnFormatter;
+	RtlCopyMemory(pEmployeeListing->Data.sFirstName, pszFirstName, cbFirstName);
+	RtlCopyMemory(pEmployeeListing->Data.sLastName, pszLastName, cbLastName);
+	RtlCopyMemory(pEmployeeListing->Data.sDescription, pszDescription, cbDescription);
 
 	return pEmployeeListing;
 }

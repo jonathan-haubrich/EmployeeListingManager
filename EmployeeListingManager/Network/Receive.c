@@ -35,6 +35,39 @@ ReceiveAll(
 }
 
 BOOL
+ReceiveRequestAddUserDataElement(
+	SOCKET sRemote,
+	BYTE cbElementRecvLen,
+	BYTE pbElementBufferMaxSize,
+	PBYTE pbElementBuffer,
+	PBYTE pbElementBufferLen)
+{
+	PBYTE pBuffer = NULL;
+	BOOL fSuccess = TRUE;
+
+	pBuffer = HeapAlloc(GetProcessHeap(),
+		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
+		cbElementRecvLen);
+
+	if (FALSE == ReceiveAll(sRemote, pBuffer, cbElementRecvLen))
+	{
+		fSuccess = FALSE;
+		goto end;
+	}
+	*pbElementBufferLen = min(pbElementBufferMaxSize, cbElementRecvLen);
+	RtlCopyMemory(pbElementBuffer,
+		pBuffer,
+		*pbElementBufferLen);
+
+end:
+	if (NULL != pBuffer)
+	{
+		HeapFree(GetProcessHeap(), 0, pBuffer);
+	}
+	return fSuccess;
+}
+
+BOOL
 ReceiveRequestAddUser(
 	SOCKET sRemote,
 	PREQUEST_ADD_USER *ppRequestAddUser)
@@ -44,34 +77,60 @@ ReceiveRequestAddUser(
 		return FALSE;
 	}
 
-	BYTE bId = 0;
-	SIZE_T cbListingSize = 0;
-	SIZE_T cbRemaining = 0;
+	REQUEST_ADD_USER_METADATA MetaData = { 0 };
+	SIZE_T cbRequired = 0;
 	PREQUEST_ADD_USER pRequestAddUser = NULL;
-	PBYTE pBuffer = NULL;
 
-	if (FALSE == ReceiveAll(sRemote, &bId, sizeof(bId)))
+	if (FALSE == ReceiveAll(sRemote, (PBYTE)&MetaData, sizeof(MetaData)))
 	{
 		goto fail;
 	}
 
-	if (FALSE == ReceiveAll(sRemote, (PBYTE)&cbListingSize, sizeof(cbListingSize)))
-	{
-		goto fail;
-	}
-	cbListingSize = htonll(cbListingSize);
+	cbRequired = sizeof(MetaData) +
+		MetaData.cbFormatter +
+		MetaData.cbFirstName +
+		MetaData.cbLastName +
+		MetaData.cbDescription;
 
 	pRequestAddUser = (PREQUEST_ADD_USER)HeapAlloc(GetProcessHeap(),
 		HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS,
-		cbListingSize);
+		cbRequired);
 
-	pRequestAddUser->bId = bId;
-	pRequestAddUser->cbListingSize = cbListingSize;
+	RtlCopyMemory(&pRequestAddUser->MetaData, &MetaData, sizeof(pRequestAddUser->MetaData));
+	pRequestAddUser->MetaData.cbListingSize = htonl(pRequestAddUser->MetaData.cbListingSize);
 
-	cbRemaining = cbListingSize - sizeof(bId) - sizeof(cbListingSize);
-	pBuffer = (PBYTE)pRequestAddUser + (cbListingSize - cbRemaining);
+	if (FALSE == ReceiveRequestAddUserDataElement(sRemote,
+		pRequestAddUser->MetaData.cbFormatter,
+		FORMATTER_NAME_MAX_LEN,
+		pRequestAddUser->Data.sFormatter,
+		&pRequestAddUser->MetaData.cbFormatter))
+	{
+		goto fail;
+	}
 
-	if (FALSE == ReceiveAll(sRemote, pBuffer, cbRemaining))
+	if (FALSE == ReceiveRequestAddUserDataElement(sRemote,
+		pRequestAddUser->MetaData.cbFirstName,
+		EL_FIRSTNAME_MAX_LEN,
+		pRequestAddUser->Data.sFirstName,
+		&pRequestAddUser->MetaData.cbFirstName))
+	{
+		goto fail;
+	}
+
+	if (FALSE == ReceiveRequestAddUserDataElement(sRemote,
+		pRequestAddUser->MetaData.cbLastName,
+		EL_LASTNAME_MAX_LEN,
+		pRequestAddUser->Data.sLastName,
+		&pRequestAddUser->MetaData.cbLastName))
+	{
+		goto fail;
+	}
+
+	if (FALSE == ReceiveRequestAddUserDataElement(sRemote,
+		pRequestAddUser->MetaData.cbDescription,
+		EL_DESCRIPTION_MAX_LEN,
+		pRequestAddUser->Data.sDescription,
+		&pRequestAddUser->MetaData.cbDescription))
 	{
 		goto fail;
 	}

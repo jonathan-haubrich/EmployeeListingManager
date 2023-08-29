@@ -1,5 +1,7 @@
 #include "EmployeeListingCollection.h"
 
+#include <stdio.h>
+
 PEMPLOYEE_LISTING_COLLECTION
 EmployeeListingCollectionNew(
 	VOID)
@@ -45,8 +47,8 @@ EmployeeListingCollectionGetCapacity(
 
 	while (NULL != pCursor)
 	{
-		cRemaining -= pCursor->cbListingSize;
-		pCursor = pCursor->pelNext;
+		cRemaining -= pCursor->MetaData.cbListingSize;
+		pCursor = pCursor->MetaData.pelNext;
 	}
 
 	return cRemaining;
@@ -62,7 +64,7 @@ EmployeeListingCollectionGetEntries(
 	while (NULL != pCursor)
 	{
 		++cEntries;
-		pCursor = pCursor->pelNext;
+		pCursor = pCursor->MetaData.pelNext;
 	}
 
 	return cEntries;
@@ -103,8 +105,8 @@ EmployeeListingCollectionFindSlot(
 			return pCursor;
 		}
 
-		pCursor = pNext + ((PEMPLOYEE_LISTING)pNext)->cbListingSize;
-		pNext = (PBYTE)((PEMPLOYEE_LISTING)pNext)->pelNext;
+		pCursor = pNext + ((PEMPLOYEE_LISTING)pNext)->MetaData.cbListingSize;
+		pNext = (PBYTE)((PEMPLOYEE_LISTING)pNext)->MetaData.pelNext;
 	}
 
 	// if we got here, pNext is NULL
@@ -136,7 +138,7 @@ EmployeeListingCollectionGetNeighbor(
 		pListingSlot > (PBYTE)pCursor)
 	{
 		pPrev = pCursor;
-		pCursor = pCursor->pelNext;
+		pCursor = pCursor->MetaData.pelNext;
 	}
 
 	if (ELC_NEIGHBOR_LEFT == iNeighbor)
@@ -177,11 +179,10 @@ EmployeeListingCollectionGetSuccessor(
 VOID
 EmployeeListingCollectionAddListing(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings,
-	PEMPLOYEE_LISTING pelListing,
-	SIZE_T cbListing)
+	PEMPLOYEE_LISTING pelListing)
 {
 	PBYTE pListingSlot = EmployeeListingCollectionFindSlot(pelcListings,
-		cbListing);
+		pelListing->MetaData.cbListingSize);
 
 	if (NULL == pelcListings->pelFirst)
 	{
@@ -189,21 +190,31 @@ EmployeeListingCollectionAddListing(
 	}
 	else
 	{
-		pelListing->pelPrev = EmployeeListingCollectionGetPredecessor(pelcListings, pListingSlot);
-		pelListing->pelNext = EmployeeListingCollectionGetSuccessor(pelcListings, pListingSlot);
+		pelListing->MetaData.pelPrev = EmployeeListingCollectionGetPredecessor(pelcListings, pListingSlot);
+		pelListing->MetaData.pelNext = EmployeeListingCollectionGetSuccessor(pelcListings, pListingSlot);
 
-		if (NULL != pelListing->pelPrev)
+		if (NULL == pelListing->MetaData.pelPrev)
 		{
-			pelListing->pelPrev->pelNext = (PEMPLOYEE_LISTING)pListingSlot;
+			// this listing becomes the head of the linked list
+			pelcListings->pelFirst->MetaData.pelPrev = (PEMPLOYEE_LISTING)pListingSlot;
+			pelcListings->pelFirst = (PEMPLOYEE_LISTING)pListingSlot;
+		}
+		else
+		{
+			// otherwise listing was in the middle somewhere
+			pelListing->MetaData.pelPrev->MetaData.pelNext = (PEMPLOYEE_LISTING)pListingSlot;
 		}
 
-		if (NULL != pelListing->pelNext)
+		if (NULL != pelListing->MetaData.pelNext)
 		{
-			pelListing->pelNext->pelPrev = (PEMPLOYEE_LISTING)pListingSlot;
+			pelListing->MetaData.pelNext->MetaData.pelPrev = (PEMPLOYEE_LISTING)pListingSlot;
 		}
 	}
 
-	RtlCopyMemory(pListingSlot, pelListing, pelListing->cbListingSize);
+	RtlCopyMemory(pListingSlot,
+		pelListing,
+		(sizeof(EMPLOYEE_LISTING) - 1) + pelListing->MetaData.cbDescription
+	);
 }
 
 VOID
@@ -211,26 +222,26 @@ EmployeeListingCollectionRemoveListing(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings,
 	PEMPLOYEE_LISTING pelListing)
 {
-	if (NULL == pelListing->pelPrev)
+	if (NULL == pelListing->MetaData.pelPrev)
 	{
 		// listing is the first
-		pelcListings->pelFirst = pelListing->pelNext;
+		pelcListings->pelFirst = pelListing->MetaData.pelNext;
 
 		// pelFirst might be NULL here if listing was only one in collection
 		if (NULL != pelcListings->pelFirst &&
-			NULL != pelcListings->pelFirst->pelNext)
+			NULL != pelcListings->pelFirst->MetaData.pelNext)
 		{
-			pelcListings->pelFirst->pelPrev = pelcListings->pelFirst;
+			pelcListings->pelFirst->MetaData.pelPrev = pelcListings->pelFirst;
 		}
 		return;
 	}
 
-	pelListing->pelPrev->pelNext = pelListing->pelNext;
+	pelListing->MetaData.pelPrev->MetaData.pelNext = pelListing->MetaData.pelNext;
 
 	// only need to set next's prev if listing isn't the last
-	if (NULL != pelListing->pelNext)
+	if (NULL != pelListing->MetaData.pelNext)
 	{
-		pelListing->pelNext->pelPrev = pelListing->pelPrev;
+		pelListing->MetaData.pelNext->MetaData.pelPrev = pelListing->MetaData.pelPrev;
 	}
 }
 
@@ -243,12 +254,12 @@ EmployeeListingCollectionGetListingById(
 
 	while (NULL != pCursor)
 	{
-		if (bId == pCursor->bId)
+		if (bId == pCursor->MetaData.bId)
 		{
 			return pCursor;
 		}
 
-		pCursor = pCursor->pelNext;
+		pCursor = pCursor->MetaData.pelNext;
 	}
 
 	// id not found

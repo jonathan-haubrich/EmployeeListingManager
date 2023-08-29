@@ -79,31 +79,31 @@ HandleRequestAddUser(
 		return FALSE;
 	}
 
-	if (NULL != EmployeeListingCollectionGetListingById(pelcListings, pRequestAddUser->bId))
+	if (NULL != EmployeeListingCollectionGetListingById(pelcListings, pRequestAddUser->MetaData.bId))
 	{
 		ResponseHeader.bResponseCode = ELM_RESPONSE_USER_ALREADY_EXISTS;
 		goto end;
 	}
 
-	fnFormatter = GetFormatterByName(pRequestAddUser->sFormatter);
+	fnFormatter = GetFormatterByName(pRequestAddUser->Data.sFormatter);
 	if (NULL == fnFormatter)
 	{
 		ResponseHeader.bResponseCode = ELM_RESPONSE_INVALID_FORMATTER;
 		goto end;
 	}
 
-	pEmployeeListing = EmployeeListingNew(pRequestAddUser->bId,
-		pRequestAddUser->sFirstName,
-		pRequestAddUser->sLastName,
-		pRequestAddUser->cbDescription,
-		pRequestAddUser->sDescription,
+	pEmployeeListing = EmployeeListingNew(pRequestAddUser->MetaData.bId,
+		pRequestAddUser->Data.sFirstName,
+		pRequestAddUser->Data.sLastName,
+		pRequestAddUser->MetaData.cbDescription,
+		pRequestAddUser->Data.sDescription,
 		fnFormatter);
 	if (NULL == pEmployeeListing)
 	{
 		ResponseHeader.bResponseCode = ELM_RESPONSE_FAILURE;
 	}
 
-	EmployeeListingCollectionAddListing(pelcListings, pEmployeeListing, pRequestAddUser->cbListingSize);
+	EmployeeListingCollectionAddListing(pelcListings, pEmployeeListing);
 
 end:
 	if (NULL != pEmployeeListing)
@@ -154,7 +154,7 @@ HandleRequestListUsers(
 	PEMPLOYEE_LISTING pEmployeeListing = NULL;
 
 	BYTE cEntries = EmployeeListingCollectionGetEntries(pelcListings);
-	SIZE_T cbEntriesSize = sizeof(pEmployeeListing->bId) * cEntries;
+	SIZE_T cbEntriesSize = sizeof(pEmployeeListing->MetaData.bId) * cEntries;
 	SIZE_T cbTotalSize = ((sizeof(*pResponseHeaderPayload) - 1) + cbEntriesSize);
 
 	pResponseHeaderPayload = HeapAlloc(GetProcessHeap(),
@@ -170,10 +170,10 @@ HandleRequestListUsers(
 
 	while (NULL != pEmployeeListing)
 	{
-		pResponseHeaderPayload->rdPayload.abPayload[cEntry] = pEmployeeListing->bId;
+		pResponseHeaderPayload->rdPayload.abPayload[cEntry] = pEmployeeListing->MetaData.bId;
 
 		++cEntry;
-		pEmployeeListing = pEmployeeListing->pelNext;
+		pEmployeeListing = pEmployeeListing->MetaData.pelNext;
 	}
 
 	fSuccess = SendAll(sRemote, (PBYTE)pResponseHeaderPayload, cbTotalSize);
@@ -203,7 +203,7 @@ HandleRequestDisplayUser(
 	}
 
 	SendAll(sRemote, (PBYTE)&ResponseHeader, sizeof(ResponseHeader));
-	pEmployeeListing->fnFormatter((HANDLE)sRemote, pEmployeeListing);
+	pEmployeeListing->MetaData.fnFormatter((HANDLE)sRemote, pEmployeeListing);
 	return TRUE;
 
 end:

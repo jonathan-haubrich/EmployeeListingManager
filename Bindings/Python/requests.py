@@ -28,7 +28,7 @@ EL_FIRSTNAME_MAX_LEN = 0x10
 EL_LASTNAME_MAX_LEN = 0x10
 
 ELM_REQUEST_ADD_USER = 0
-ELM_REQUEST_ADD_USER_FMT = f"!bbQb{FORMATTER_NAME_MAX_LEN}sb{EL_FIRSTNAME_MAX_LEN}sb{EL_LASTNAME_MAX_LEN}sb{{DESCRIPTION_LEN}}s"
+ELM_REQUEST_ADD_USER_FMT = f"!bbLbbbb{FORMATTER_NAME_MAX_LEN}s{EL_FIRSTNAME_MAX_LEN}s{EL_LASTNAME_MAX_LEN}s{{DESCRIPTION_LEN}}s"
 def create_request_add_user(user_id, formatter, first_name, last_name, description):
     formatter = formatter.ljust(FORMATTER_NAME_MAX_LEN, '\0').encode()
     first_name = first_name.ljust(EL_FIRSTNAME_MAX_LEN, '\0').encode()
@@ -36,19 +36,18 @@ def create_request_add_user(user_id, formatter, first_name, last_name, descripti
     description = description[:0x100].encode()
 
     fmt = ELM_REQUEST_ADD_USER_FMT.format(DESCRIPTION_LEN=len(description))
-    print(fmt)
     request = struct.pack(
         fmt,
         ELM_REQUEST_ADD_USER,
         user_id,
         0,
         len(formatter),
-        formatter,
         len(first_name),
-        first_name,
         len(last_name),
-        last_name,
         len(description),
+        formatter,
+        first_name,
+        last_name,
         description
     )
 
@@ -61,12 +60,12 @@ def create_request_add_user(user_id, formatter, first_name, last_name, descripti
         user_id,
         listing_size,
         len(formatter),
-        formatter,
         len(first_name),
-        first_name,
         len(last_name),
-        last_name,
         len(description),
+        formatter,
+        first_name,
+        last_name,
         description
     )
 

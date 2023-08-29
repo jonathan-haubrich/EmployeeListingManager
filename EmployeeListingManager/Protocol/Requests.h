@@ -22,18 +22,30 @@ typedef struct _REQUEST_HEADER
 	BYTE	bCommandType;
 } REQUEST_HEADER, *PREQUEST_HEADER;
 
-typedef struct _REQUEST_ADD_USER
+typedef struct _REQUEST_ADD_USER_METADATA
 {
 	BYTE bId;
-	SIZE_T cbListingSize;
+	DWORD cbListingSize;
 	BYTE cbFormatter;
-	CHAR sFormatter[FORMATTER_NAME_MAX_LEN];
 	BYTE cbFirstName;
-	CHAR sFirstName[EL_FIRSTNAME_MAX_LEN];
 	BYTE cbLastName;
-	CHAR sLastName[EL_LASTNAME_MAX_LEN];
 	BYTE cbDescription;
+} REQUEST_ADD_USER_METADATA, *PREQUEST_ADD_USER_METADATA;
+
+typedef struct _REQUEST_ADD_USER_DATA
+{
+	CHAR sFormatter[FORMATTER_NAME_MAX_LEN];
+	CHAR sFirstName[EL_FIRSTNAME_MAX_LEN];
+	CHAR sLastName[EL_LASTNAME_MAX_LEN];
 	CHAR sDescription[1];	// Descriptions can be long so they are variable length
+} REQUEST_ADD_USER_DATA, * PREQUEST_ADD_USER_DATA;
+
+#define REQUEST_ADD_USER_DATA_SIZE	(sizeof(REQUEST_ADD_USER_DATA) - 1)
+
+typedef struct _REQUEST_ADD_USER
+{
+	REQUEST_ADD_USER_METADATA MetaData;
+	REQUEST_ADD_USER_DATA Data;
 } REQUEST_ADD_USER, *PREQUEST_ADD_USER;
 
 typedef struct _REQUEST_REMOVE_USER

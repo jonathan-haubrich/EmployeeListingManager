@@ -64,8 +64,7 @@ EmployeeListingCollectionGetSuccessor(
 VOID
 EmployeeListingCollectionAddListing(
 	PEMPLOYEE_LISTING_COLLECTION pelcListings,
-	PEMPLOYEE_LISTING pelListing,
-	SIZE_T cbListing);
+	PEMPLOYEE_LISTING pelListing);
 
 VOID
 EmployeeListingCollectionRemoveListing(

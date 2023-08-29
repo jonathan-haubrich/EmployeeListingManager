@@ -17,9 +17,9 @@ VOID OutputStrWithNewline(HANDLE hFile, PSTR pStr, DWORD cbStrLen)
 
 VOID BasicFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
 {
-	OutputStrWithNewline(hFile, pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
-	OutputStrWithNewline(hFile, pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
-	OutputStrWithNewline(hFile, pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
+	OutputStrWithNewline(hFile, pEmployeeListing->Data.sFirstName, pEmployeeListing->MetaData.cbFirstName);
+	OutputStrWithNewline(hFile, pEmployeeListing->Data.sLastName, pEmployeeListing->MetaData.cbLastName);
+	OutputStrWithNewline(hFile, pEmployeeListing->Data.sDescription, pEmployeeListing->MetaData.cbDescription);
 }
 
 VOID FancyFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
@@ -28,9 +28,9 @@ VOID FancyFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
 	CHAR acszHeaderFooter[] = "=========================";
 
 	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter)-1);
-	OutputStrWithNewline(hFile, pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
-	OutputStrWithNewline(hFile, pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
-	OutputStrWithNewline(hFile, pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
+	OutputStrWithNewline(hFile, pEmployeeListing->Data.sFirstName, pEmployeeListing->MetaData.cbFirstName);
+	OutputStrWithNewline(hFile, pEmployeeListing->Data.sLastName, pEmployeeListing->MetaData.cbLastName);
+	OutputStrWithNewline(hFile, pEmployeeListing->Data.sDescription, pEmployeeListing->MetaData.cbDescription);
 	OutputStrWithNewline(hFile, acszHeaderFooter, _countof(acszHeaderFooter)-1);
 }
 
@@ -92,9 +92,9 @@ OutputStrAsHexWithNewline(HANDLE hFile, PSTR pStr, DWORD cbStrLen)
 
 VOID HexFormatter(HANDLE hFile, PEMPLOYEE_LISTING pEmployeeListing)
 {
-	OutputStrAsHexWithNewline(hFile, pEmployeeListing->sFirstName, pEmployeeListing->cbFirstName);
-	OutputStrAsHexWithNewline(hFile, pEmployeeListing->sLastName, pEmployeeListing->cbLastName);
-	OutputStrAsHexWithNewline(hFile, pEmployeeListing->sDescription, pEmployeeListing->cbDescription);
+	OutputStrAsHexWithNewline(hFile, pEmployeeListing->Data.sFirstName, pEmployeeListing->MetaData.cbFirstName);
+	OutputStrAsHexWithNewline(hFile, pEmployeeListing->Data.sLastName, pEmployeeListing->MetaData.cbLastName);
+	OutputStrAsHexWithNewline(hFile, pEmployeeListing->Data.sDescription, pEmployeeListing->MetaData.cbDescription);
 }
 
 extern FORMATTER_ENTRY g_afeFormattersMap[ELF_NUM_FORMATTERS] = {
